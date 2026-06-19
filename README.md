@@ -380,7 +380,7 @@ MIT © QQBot Framework Team
 
 🐧 用代码和企鹅做朋友吧！
 
-https://img.shields.io/github/stars/Ice-rink/qqbot-framework?style=social
-https://img.shields.io/github/forks/Ice-rink/qqbot-framework?style=social
+![stars](https://img.shields.io/github/stars/Ice-rink/QQBot_framework?style=social)
+![forks](https://img.shields.io/github/forks/Ice-rink/QQBot_framework?style=social)
 
 </div>
