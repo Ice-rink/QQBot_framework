@@ -9,11 +9,6 @@ const CONFIG_PATH = process.env.QQBOT_CONFIG || "./config.json";
 const client = createClient(CONFIG_PATH);
 
 // ============ 事件监听 ============
-
-client.on("ready", (data) => {
-    logger.info(`会话就绪: ${data.session_id}`);
-});
-
 client.on("resumed", () => {
     logger.info("会话恢复");
 });
