@@ -1,25 +1,41 @@
 #!/usr/bin/env node
 
-import { createClient, logger, createLogger, COLORS } from "./lib/exports.js";
-import {
-    executeBackendCommand,
-    initBackendCommands,
-    getBackendCommands,
-    registerBackendCommand
-} from "./lib/utils.js";
+import { createBot, setBot, createLogger, loadPlugins, startBot, on, addCmd } from "./lib/exports.js";
+import { executeBackendCommand, initBackendCommands } from "./lib/utils.js";
 import readline from "node:readline";
 import http from "node:http";
 import url from "node:url";
 
+// ============ 全局异常捕获 ============
+process.on('unhandledRejection', (reason, promise) => {
+    log.error(`⚠️ 未处理的 Promise 拒绝:`);
+    if (reason instanceof Error) {
+        log.error(`   ${reason.message}`);
+        log.error(`   ${reason.stack}`);
+    } else {
+        log.error(`   ${reason}`);
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    log.error(`💥 未捕获的异常: ${error.message}`);
+    log.error(error.stack);
+    // 不要退出进程，继续运行
+});
+
 const CONFIG_PATH = process.env.QQBOT_CONFIG || "./config.json";
 
 const log = createLogger("Main");
-const client = createClient(CONFIG_PATH);
+const client = createBot(CONFIG_PATH);
 
-// ============ 初始化后台指令 ============
+// 将 Bot 注入全局 API 对象
+setBot(client);
+
+// 初始化后台指令系统
 initBackendCommands();
 
-// ============ 创建终端交互 ============
+// ============ 终端交互 ============
+
 let rl = null;
 
 function startRepl() {
@@ -30,7 +46,6 @@ function startRepl() {
         terminal: true,
     });
 
-    // 监听输入
     rl.on("line", async (line) => {
         const input = line.trim();
         if (!input) {
@@ -38,11 +53,10 @@ function startRepl() {
             return;
         }
 
-        // 执行后台指令
         const result = await executeBackendCommand(input);
         if (result) {
             if (result.error) {
-                log.error(`${COLORS.brightRed}❌ ${result.message}${COLORS.reset}`);
+                log.error(`❌ ${result.message}`);
             } else if (result.message !== null) {
                 log.info(result.message);
             }
@@ -52,11 +66,10 @@ function startRepl() {
     });
 
     rl.on("close", () => {
-        log.info("\n👋 终端已关闭");
+        log.info("Stoping...\n👋 终端已关闭");
         process.exit(0);
     });
 
-    // 处理 Ctrl+C
     rl.on("SIGINT", () => {
         log.info("\n");
         rl.close();
@@ -64,13 +77,6 @@ function startRepl() {
 
     rl.prompt();
 }
-
-// ============ 事件监听 ============
-
-client.on("interaction", (data) => {
-    log.info(`交互事件: ${data.id}`);
-});
-
 
 // ============ Webhook 服务器 ============
 
@@ -131,13 +137,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         case "start":
             (async () => {
                 try {
-                    logoLog()
+                    logoLog();
                     log.info("正在加载插件...");
-                    await client.loadPlugins("./plugins");
+                    await loadPlugins("./plugins");
                     log.info("正在启动 QQBot...");
-                    await client.start();
-
-                    // 启动终端交互
+                    await startBot();
                     startRepl();
                 } catch (e) {
                     log.error(`启动失败: ${e.message}`);
@@ -149,8 +153,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         case "webhook":
             (async () => {
                 try {
-                    await client.loadPlugins("./plugins");
-                    await client.start();
+                    await loadPlugins("./plugins");
+                    await startBot();
                     startWebhookServer(parseInt(process.argv[3]) || 3000);
                     startRepl();
                 } catch (e) {
@@ -162,13 +166,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
         default:
             log.info(`
-${COLORS.brightCyan}QQBot Framework${COLORS.reset}
+\x1b[96mQQBot Framework\x1b[0m
 
-${COLORS.yellow}用法:${COLORS.reset}
+\x1b[93m用法:\x1b[0m
     node index.js start              # 启动 WebSocket 模式 + 终端控制台
     node index.js webhook [port]     # 启动 Webhook 模式 + 终端控制台
 
-${COLORS.yellow}环境变量:${COLORS.reset}
+\x1b[93m环境变量:\x1b[0m
     QQBOT_CONFIG   配置文件路径 (默认: ./config.json)
     LOG_LEVEL      日志级别 (DEBUG/INFO/WARN/ERROR)
     NO_COLOR       禁用颜色输出
@@ -183,9 +187,7 @@ function logoLog() {
     log.info(` | |  | | | |  | | |  _ <   / _ \\  | __|`);
     log.info(` | |__| | | |__| | | |_) | | (_) | | |_ `);
     log.info(`  \\___\\_\\  \\___\\_\\ |____/   \\___/   \\__|`);
-    log.info(`        ==== QQBot Framework v1.0.0 ===        `)
+    log.info(`        ==== QQBot Framework v1.0.0 ===        `);
 }
-
-log.debug("aaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
 export default client;
