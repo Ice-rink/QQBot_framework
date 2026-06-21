@@ -187,7 +187,7 @@ function logoLog() {
     log.info(` | |  | | | |  | | |  _ <   / _ \\  | __|`);
     log.info(` | |__| | | |__| | | |_) | | (_) | | |_ `);
     log.info(`  \\___\\_\\  \\___\\_\\ |____/   \\___/   \\__|`);
-    log.info(`        ==== QQBot Framework v1.0.0 ===        `);
+    log.info(`    ==== QQBot Framework v1.0.0 ===    `);
 }
 
 export default client;

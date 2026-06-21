@@ -12,7 +12,7 @@ export default async function (QQBot) {
 
     QQBot.on("message.c2c", (pack) => {
         // logger.info(JSON.stringify(pack, null, 4));
-        if (pack.content === "#napcat") reply(pack, [
+        if (pack.content.includes("#napcat")) reply(pack, [
             "NapCat 信息",
             "版本: 1.14.514",
             "平台: linux(128 - bit)",
